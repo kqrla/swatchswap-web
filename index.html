@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swatchswap</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f; --surface: #1a1a1a; --border: #2e2e2e;
+      --text: #f0f0f0; --text-secondary: #888;
+      --accent: #7c6dff; --accent-hover: #9888ff; --radius: 10px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; gap: 32px; }
+    h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+    p.sub { color: var(--text-secondary); font-size: 14px; text-align: center; max-width: 420px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 560px; }
+    #dropzone { padding: 48px 24px; text-align: center; cursor: pointer; border-radius: var(--radius); transition: background 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    #dropzone:hover, #dropzone.drag-over { background: #222; }
+    #dropzone svg { opacity: 0.4; }
+    #dropzone .label { font-size: 15px; font-weight: 500; }
+    #dropzone .hint { font-size: 13px; color: var(--text-secondary); }
+    #file-input { display: none; }
+    #tool { display: none; flex-direction: column; gap: 0; }
+    #previews { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+    .preview-pane { background: var(--surface); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); }
+    .preview-pane img { width: 100%; border-radius: 6px; background: #111; display: block; object-fit: contain; max-height: 220px; }
+    #colors-section { padding: 20px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+    .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+    #color-rows { display: flex; flex-direction: column; gap: 8px; }
+    .color-row { display: flex; align-items: center; gap: 10px; }
+    .swatch { width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .arrow { color: var(--text-secondary); font-size: 14px; flex-shrink: 0; }
+    .color-picker-wrap { flex: 1; display: flex; align-items: center; gap: 8px; background: #111; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
+    .color-picker-swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; cursor: pointer; }
+    .color-picker-wrap input[type="color"] { opacity: 0; position: absolute; width: 0; height: 0; }
+    .hex-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; outline: none; width: 80px; }
+    #actions { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: space-between; align-items: center; }
+    #status { font-size: 13px; color: var(--text-secondary); }
+    .btn { padding: 8px 18px; border-radius: 7px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: #555; }
+    .btn-row { display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+<h1>swatchswap</h1>
+<p class="sub">swap hardcoded colors in any image. upload, pick replacements, download.</p>
+<div class="card">
+  <div id="dropzone">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <span class="label">drop an image here</span>
+    <span class="hint">or click to browse — png, jpg, webp, svg</span>
+    <input type="file" id="file-input" accept="image/*">
+  </div>
+  <div id="tool">
+    <div id="previews">
+      <div class="preview-pane"><span class="preview-label">original</span><img id="preview-orig" alt="Original"></div>
+      <div class="preview-pane"><span class="preview-label">preview</span><img id="preview-result" alt="Result"></div>
+    </div>
+    <div id="colors-section">
+      <span class="section-label">colors detected</span>
+      <div id="color-rows"></div>
+    </div>
+    <div id="actions">
+      <span id="status">ready</span>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-reset">reset</button>
+        <button class="btn btn-primary" id="btn-apply" disabled>apply</button>
+        <button class="btn btn-primary" id="btn-download" style="display:none">download</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { detectColors, recolorImage } from './recolor.js'
+const dropzone = document.getElementById('dropzone')
+const fileInput = document.getElementById('file-input')
+const tool = document.getElementById('tool')
+const previewOrig = document.getElementById('preview-orig')
+const previewResult = document.getElementById('preview-result')
+const colorRows = document.getElementById('color-rows')
+const btnApply = document.getElementById('btn-apply')
+const btnReset = document.getElementById('btn-reset')
+const btnDownload = document.getElementById('btn-download')
+const status = document.getElementById('status')
+let currentFile = null, resultBlob = null, colorEntries = []
+dropzone.addEventListener('click', () => fileInput.click())
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]) })
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over') })
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'))
+dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) loadFile(f) })
+async function loadFile(file) {
+  currentFile = file; resultBlob = null
+  const url = URL.createObjectURL(file)
+  previewOrig.src = url; previewResult.src = url
+  dropzone.style.display = 'none'; tool.style.display = 'flex'
+  btnDownload.style.display = 'none'; btnApply.style.display = ''
+  setStatus('detecting colors…'); colorRows.innerHTML = ''; colorEntries = []
+  const colors = await detectColors(file, { maxColors: 8 })
+  colorEntries = colors.map(hex => ({ original: hex, current: hex }))
+  renderColorRows()
+  setStatus(colors.length + ' color' + (colors.length === 1 ? '' : 's') + ' found')
+}
+function renderColorRows() {
+  colorRows.innerHTML = ''
+  colorEntries.forEach((entry, i) => {
+    const row = document.createElement('div'); row.className = 'color-row'
+    const origSwatch = document.createElement('div'); origSwatch.className = 'swatch'; origSwatch.style.background = entry.original
+    const arrow = document.createElement('span'); arrow.className = 'arrow'; arrow.textContent = '→'
+    const wrap = document.createElement('div'); wrap.className = 'color-picker-wrap'
+    const pickerSwatch = document.createElement('div'); pickerSwatch.className = 'color-picker-swatch'; pickerSwatch.style.background = entry.current
+    const nativePicker = document.createElement('input'); nativePicker.type = 'color'; nativePicker.value = entry.current
+    const hexInput = document.createElement('input'); hexInput.className = 'hex-input'; hexInput.type = 'text'; hexInput.maxLength = 7; hexInput.value = entry.current.toLowerCase(); hexInput.spellcheck = false
+    pickerSwatch.addEventListener('click', () => nativePicker.click())
+    nativePicker.addEventListener('input', () => { const val = nativePicker.value.toUpperCase(); colorEntries[i].current = val; pickerSwatch.style.background = val; hexInput.value = val.toLowerCase(); checkChanged() })
+    hexInput.addEventListener('input', () => { let val = hexInput.value.trim(); if (!val.startsWith('#')) val = '#' + val; if (/^#[0-9a-fA-F]{6}$/.test(val)) { colorEntries[i].current = val.toUpperCase(); pickerSwatch.style.background = val; nativePicker.value = val; checkChanged() } })
+    wrap.appendChild(pickerSwatch); wrap.appendChild(nativePicker); wrap.appendChild(hexInput)
+    row.appendChild(origSwatch); row.appendChild(arrow); row.appendChild(wrap)
+    colorRows.appendChild(row)
+  })
+}
+function checkChanged() { btnApply.disabled = !colorEntries.some(e => e.original.toLowerCase() !== e.current.toLowerCase()) }
+function setStatus(msg) { status.textContent = msg }
+btnApply.addEventListener('click', async () => {
+  btnApply.disabled = true; setStatus('applying…')
+  const replacements = colorEntries.filter(e => e.original.toLowerCase() !== e.current.toLowerCase()).map(e => ({ from: e.original, to: e.current }))
+  resultBlob = await recolorImage(currentFile, replacements)
+  previewResult.src = URL.createObjectURL(resultBlob)
+  btnApply.disabled = false; btnDownload.style.display = ''
+  setStatus('done — download or keep adjusting')
+})
+btnDownload.addEventListener('click', () => {
+  if (!resultBlob) return
+  const a = document.createElement('a'); a.href = URL.createObjectURL(resultBlob)
+  a.download = (currentFile.name.replace(/\.[^.]+$/, '') || 'image') + '-recolored.png'; a.click()
+})
+btnReset.addEventListener('click', () => {
+  currentFile = null; resultBlob = null; colorEntries = []
+  colorRows.innerHTML = ''; previewOrig.src = ''; previewResult.src = ''
+  dropzone.style.display = ''; tool.style.display = 'none'; fileInput.value = ''
+})
+</script>
+</body>
+</html>
