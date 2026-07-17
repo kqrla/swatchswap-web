@@ -10,11 +10,18 @@
       --bg: #0f0f0f; --surface: #1a1a1a; --border: #2e2e2e;
       --text: #f0f0f0; --text-secondary: #888;
       --accent: #7c6dff; --accent-hover: #9888ff; --radius: 10px;
+      --danger: #ef4444; --success: #22c55e; --warn: #f59e0b;
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; gap: 32px; }
     h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
     p.sub { color: var(--text-secondary); font-size: 14px; text-align: center; max-width: 420px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 560px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 620px; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 10px 0; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
     #dropzone { padding: 48px 24px; text-align: center; cursor: pointer; border-radius: var(--radius); transition: background 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     #dropzone:hover, #dropzone.drag-over { background: #222; }
     #dropzone svg { opacity: 0.4; }
@@ -32,19 +39,49 @@
     .color-row { display: flex; align-items: center; gap: 10px; }
     .swatch { width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
     .arrow { color: var(--text-secondary); font-size: 14px; flex-shrink: 0; }
-    .color-picker-wrap { flex: 1; display: flex; align-items: center; gap: 8px; background: #111; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
+    .color-picker-wrap { flex: 1; display: flex; align-items: center; gap: 8px; background: #111; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; position: relative; }
     .color-picker-swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; cursor: pointer; }
     .color-picker-wrap input[type="color"] { opacity: 0; position: absolute; width: 0; height: 0; }
     .hex-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; outline: none; width: 80px; }
+    .pair-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: rgba(124,109,255,0.15); color: var(--accent); flex-shrink: 0; cursor: default; }
+    .contrast-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; font-weight: 600; }
+    .contrast-badge.pass { background: rgba(34,197,94,0.15); color: var(--success); }
+    .contrast-badge.fail { background: rgba(239,68,68,0.15); color: var(--danger); }
     #actions { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: space-between; align-items: center; }
     #status { font-size: 13px; color: var(--text-secondary); }
-    .btn { padding: 8px 18px; border-radius: 7px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+    .btn { padding: 8px 18px; border-radius: 7px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; font-family: inherit; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
     .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
     .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: #555; }
     .btn-row { display: flex; gap: 8px; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 5px; }
+
+    /* pairings tab */
+    .pair-section { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .pair-form { display: flex; flex-direction: column; gap: 10px; background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+    .pair-form-row { display: flex; align-items: center; gap: 8px; }
+    .pair-form-row label { font-size: 12px; color: var(--text-secondary); width: 60px; flex-shrink: 0; }
+    .pair-form-row input, .pair-form-row select { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: inherit; font-size: 13px; padding: 5px 8px; outline: none; }
+    .pair-form-row select { cursor: pointer; }
+    .pair-form-row input:focus, .pair-form-row select:focus { border-color: var(--accent); }
+    .pair-color-picks { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pair-color-pick { width: 28px; height: 28px; border-radius: 5px; border: 2px solid transparent; cursor: pointer; transition: border-color 0.1s; }
+    .pair-color-pick:hover { border-color: rgba(255,255,255,0.3); }
+    .pair-color-pick.selected { border-color: var(--accent); }
+    .pair-list-empty { color: var(--text-secondary); font-size: 13px; text-align: center; padding: 12px; line-height: 1.6; }
+    .pair-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #111; border: 1px solid var(--border); border-radius: 8px; }
+    .pair-item-dots { display: flex; gap: 3px; }
+    .pair-item-dot { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
+    .pair-item-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .pair-item-label { font-size: 13px; }
+    .pair-item-type { font-size: 11px; color: var(--text-secondary); }
+    .pair-item-actions { display: flex; gap: 4px; }
+    .pair-item-actions button { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); font-size: 11px; padding: 3px 8px; cursor: pointer; font-family: inherit; }
+    .pair-item-actions button:hover { color: var(--text); border-color: #555; }
+    .pair-item-actions .del:hover { color: var(--danger); border-color: var(--danger); }
+    .pair-io { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
   </style>
 </head>
 <body>
@@ -62,26 +99,74 @@
     <input type="file" id="file-input" accept="image/*">
   </div>
   <div id="tool">
-    <div id="previews">
-      <div class="preview-pane"><span class="preview-label">original</span><img id="preview-orig" alt="Original"></div>
-      <div class="preview-pane"><span class="preview-label">preview</span><img id="preview-result" alt="Result"></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-colors">Colors</button>
+      <button class="tab-btn" data-tab="tab-pairings">Pairings</button>
     </div>
-    <div id="colors-section">
-      <span class="section-label">colors detected</span>
-      <div id="color-rows"></div>
+    <div id="tab-colors" class="tab-panel active">
+      <div id="previews">
+        <div class="preview-pane"><span class="preview-label">original</span><img id="preview-orig" alt="Original"></div>
+        <div class="preview-pane"><span class="preview-label">preview</span><img id="preview-result" alt="Result"></div>
+      </div>
+      <div id="colors-section">
+        <span class="section-label">colors detected</span>
+        <div id="color-rows"></div>
+      </div>
+      <div id="actions">
+        <span id="status">ready</span>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-reset">reset</button>
+          <button class="btn btn-primary" id="btn-apply" disabled>apply</button>
+          <button class="btn btn-primary" id="btn-download" style="display:none">download</button>
+        </div>
+      </div>
     </div>
-    <div id="actions">
-      <span id="status">ready</span>
-      <div class="btn-row">
-        <button class="btn btn-ghost" id="btn-reset">reset</button>
-        <button class="btn btn-primary" id="btn-apply" disabled>apply</button>
-        <button class="btn btn-primary" id="btn-download" style="display:none">download</button>
+    <div id="tab-pairings" class="tab-panel">
+      <div class="pair-section">
+        <span class="section-label">create a pairing</span>
+        <div class="pair-form">
+          <div class="pair-form-row">
+            <label>label</label>
+            <input type="text" id="pair-label" placeholder="e.g. text / background" maxlength="40">
+          </div>
+          <div class="pair-form-row">
+            <label>type</label>
+            <select id="pair-type">
+              <option value="contrast">contrast (wcag)</option>
+              <option value="tint-shade">tint / shade</option>
+              <option value="complementary">complementary</option>
+              <option value="analogous">analogous</option>
+            </select>
+          </div>
+          <div class="pair-form-row">
+            <label>ratio</label>
+            <select id="pair-ratio">
+              <option value="4.5">4.5:1 (AA normal)</option>
+              <option value="3">3:1 (AA large)</option>
+              <option value="7">7:1 (AAA normal)</option>
+            </select>
+          </div>
+          <div class="pair-form-row">
+            <label>colors</label>
+            <div class="pair-color-picks" id="pair-color-picks"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-add-pair" disabled>add pairing</button>
+        </div>
+        <span class="section-label">saved pairings</span>
+        <div id="pair-list"><div class="pair-list-empty">no pairings yet. detect colors first, then pick two or more to pair.</div></div>
+        <div class="pair-io">
+          <button class="btn btn-ghost btn-sm" id="btn-export-pairs">export json</button>
+          <button class="btn btn-ghost btn-sm" id="btn-import-pairs">import json</button>
+          <input type="file" id="import-pairs-file" accept=".json" style="display:none">
+        </div>
       </div>
     </div>
   </div>
 </div>
 <script type="module">
 import { detectColors, recolorImage } from './recolor.js'
+import { contrastRatio, adjustForContrast, applyTintShadeFollow, applyHueFollow, createPairing, applyPairing, exportPairings, importPairings } from './pairing.js'
+
 const dropzone = document.getElementById('dropzone')
 const fileInput = document.getElementById('file-input')
 const tool = document.getElementById('tool')
@@ -92,12 +177,39 @@ const btnApply = document.getElementById('btn-apply')
 const btnReset = document.getElementById('btn-reset')
 const btnDownload = document.getElementById('btn-download')
 const status = document.getElementById('status')
-let currentFile = null, resultBlob = null, colorEntries = []
+
+let currentFile = null, resultBlob = null, colorEntries = [], pairings = []
+
+// load pairings from localStorage
+try { pairings = JSON.parse(localStorage.getItem('swatchswap.pairings') || '[]') } catch { pairings = [] }
+
+function savePairingsLocal() {
+  try { localStorage.setItem('swatchswap.pairings', JSON.stringify(pairings)) } catch {}
+}
+
+// tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+    btn.classList.add('active')
+    document.getElementById(btn.dataset.tab).classList.add('active')
+  })
+})
+
+// update ratio visibility based on type
+const pairType = document.getElementById('pair-type')
+const pairRatioRow = document.getElementById('pair-ratio').closest('.pair-form-row')
+pairType.addEventListener('change', () => {
+  pairRatioRow.style.display = pairType.value === 'contrast' ? '' : 'none'
+})
+
 dropzone.addEventListener('click', () => fileInput.click())
 fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]) })
 dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over') })
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'))
 dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) loadFile(f) })
+
 async function loadFile(file) {
   currentFile = file; resultBlob = null
   const url = URL.createObjectURL(file)
@@ -108,8 +220,14 @@ async function loadFile(file) {
   const colors = await detectColors(file, { maxColors: 8 })
   colorEntries = colors.map(hex => ({ original: hex, current: hex }))
   renderColorRows()
+  renderPairColorPicks()
   setStatus(colors.length + ' color' + (colors.length === 1 ? '' : 's') + ' found')
 }
+
+function findPairingsForColor(hex) {
+  return pairings.filter(p => p.colors.some(c => c.hex.toUpperCase() === hex.toUpperCase()))
+}
+
 function renderColorRows() {
   colorRows.innerHTML = ''
   colorEntries.forEach((entry, i) => {
@@ -121,15 +239,75 @@ function renderColorRows() {
     const nativePicker = document.createElement('input'); nativePicker.type = 'color'; nativePicker.value = entry.current
     const hexInput = document.createElement('input'); hexInput.className = 'hex-input'; hexInput.type = 'text'; hexInput.maxLength = 7; hexInput.value = entry.current.toLowerCase(); hexInput.spellcheck = false
     pickerSwatch.addEventListener('click', () => nativePicker.click())
-    nativePicker.addEventListener('input', () => { const val = nativePicker.value.toUpperCase(); colorEntries[i].current = val; pickerSwatch.style.background = val; hexInput.value = val.toLowerCase(); checkChanged() })
-    hexInput.addEventListener('input', () => { let val = hexInput.value.trim(); if (!val.startsWith('#')) val = '#' + val; if (/^#[0-9a-fA-F]{6}$/.test(val)) { colorEntries[i].current = val.toUpperCase(); pickerSwatch.style.background = val; nativePicker.value = val; checkChanged() } })
+
+    function onColorChange(val) {
+      val = val.toUpperCase()
+      colorEntries[i].current = val
+      pickerSwatch.style.background = val
+      hexInput.value = val.toLowerCase()
+      nativePicker.value = val
+
+      // auto-adjust paired colors
+      const matchedPairings = findPairingsForColor(entry.original)
+      for (const pairing of matchedPairings) {
+        const pairIdx = pairing.colors.findIndex(c => c.hex.toUpperCase() === entry.original.toUpperCase())
+        if (pairIdx < 0) continue
+        const adjusted = applyPairing(pairing, pairIdx, val)
+        for (const ac of adjusted) {
+          if (ac.hex.toUpperCase() === val.toUpperCase()) continue
+          const matchEntry = colorEntries.find(e => pairing.colors.some(pc => pc.hex.toUpperCase() === e.original.toUpperCase() && pc.hex.toUpperCase() !== entry.original.toUpperCase()))
+          if (matchEntry) {
+            matchEntry.current = ac.hex.toUpperCase()
+          }
+        }
+      }
+      renderColorRows()
+      checkChanged()
+    }
+
+    nativePicker.addEventListener('input', () => onColorChange(nativePicker.value))
+    hexInput.addEventListener('input', () => {
+      let val = hexInput.value.trim()
+      if (!val.startsWith('#')) val = '#' + val
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) onColorChange(val)
+    })
+
     wrap.appendChild(pickerSwatch); wrap.appendChild(nativePicker); wrap.appendChild(hexInput)
+
+    // show pairing badge
+    const entryPairings = findPairingsForColor(entry.original)
+    if (entryPairings.length > 0) {
+      const badge = document.createElement('span')
+      badge.className = 'pair-badge'
+      badge.textContent = entryPairings[0].type === 'contrast' ? '⇅' : '↔'
+      badge.title = 'paired: ' + entryPairings[0].label
+      wrap.appendChild(badge)
+    }
+
+    // show contrast ratio against paired colors
+    for (const p of entryPairings) {
+      if (p.type !== 'contrast') continue
+      const other = p.colors.find(c => c.hex.toUpperCase() !== entry.original.toUpperCase())
+      if (!other) continue
+      const otherEntry = colorEntries.find(e => e.original.toUpperCase() === other.hex.toUpperCase())
+      if (!otherEntry) continue
+      const ratio = contrastRatio(entry.current, otherEntry.current)
+      const pass = ratio >= (p.targetContrastRatio || 4.5)
+      const cb = document.createElement('span')
+      cb.className = 'contrast-badge ' + (pass ? 'pass' : 'fail')
+      cb.textContent = ratio.toFixed(1) + ':1'
+      cb.title = pass ? 'meets target' : 'below ' + (p.targetContrastRatio || 4.5) + ':1'
+      wrap.appendChild(cb)
+    }
+
     row.appendChild(origSwatch); row.appendChild(arrow); row.appendChild(wrap)
     colorRows.appendChild(row)
   })
 }
+
 function checkChanged() { btnApply.disabled = !colorEntries.some(e => e.original.toLowerCase() !== e.current.toLowerCase()) }
 function setStatus(msg) { status.textContent = msg }
+
 btnApply.addEventListener('click', async () => {
   btnApply.disabled = true; setStatus('applying…')
   const replacements = colorEntries.filter(e => e.original.toLowerCase() !== e.current.toLowerCase()).map(e => ({ from: e.original, to: e.current }))
@@ -148,6 +326,99 @@ btnReset.addEventListener('click', () => {
   colorRows.innerHTML = ''; previewOrig.src = ''; previewResult.src = ''
   dropzone.style.display = ''; tool.style.display = 'none'; fileInput.value = ''
 })
+
+// ---- pairings tab ----
+let selectedPairColors = []
+
+function renderPairColorPicks() {
+  const container = document.getElementById('pair-color-picks')
+  container.innerHTML = ''
+  selectedPairColors = []
+  for (const entry of colorEntries) {
+    const dot = document.createElement('div')
+    dot.className = 'pair-color-pick'
+    dot.style.background = entry.original
+    dot.title = entry.original
+    dot.addEventListener('click', () => {
+      const idx = selectedPairColors.indexOf(entry.original)
+      if (idx >= 0) { selectedPairColors.splice(idx, 1); dot.classList.remove('selected') }
+      else { selectedPairColors.push(entry.original); dot.classList.add('selected') }
+      document.getElementById('btn-add-pair').disabled = selectedPairColors.length < 2
+    })
+    container.appendChild(dot)
+  }
+}
+
+function renderPairList() {
+  const list = document.getElementById('pair-list')
+  list.innerHTML = ''
+  if (pairings.length === 0) {
+    list.innerHTML = '<div class="pair-list-empty">no pairings yet. detect colors first, then pick two or more to pair.</div>'
+    return
+  }
+  for (const p of pairings) {
+    const item = document.createElement('div'); item.className = 'pair-item'
+    const dots = document.createElement('div'); dots.className = 'pair-item-dots'
+    for (const c of p.colors) {
+      const d = document.createElement('div'); d.className = 'pair-item-dot'; d.style.background = c.hex; d.title = c.hex
+      dots.appendChild(d)
+    }
+    const info = document.createElement('div'); info.className = 'pair-item-info'
+    const lbl = document.createElement('span'); lbl.className = 'pair-item-label'; lbl.textContent = p.label
+    const tp = document.createElement('span'); tp.className = 'pair-item-type'; tp.textContent = p.type + (p.targetContrastRatio ? ' (' + p.targetContrastRatio + ':1)' : '')
+    info.appendChild(lbl); info.appendChild(tp)
+    const actions = document.createElement('div'); actions.className = 'pair-item-actions'
+    const delBtn = document.createElement('button'); delBtn.className = 'del'; delBtn.textContent = '×'
+    delBtn.addEventListener('click', () => { pairings = pairings.filter(x => x.id !== p.id); savePairingsLocal(); renderPairList(); renderColorRows() })
+    actions.appendChild(delBtn)
+    item.appendChild(dots); item.appendChild(info); item.appendChild(actions)
+    list.appendChild(item)
+  }
+}
+
+document.getElementById('btn-add-pair').addEventListener('click', () => {
+  if (selectedPairColors.length < 2) return
+  const label = document.getElementById('pair-label').value.trim() || 'untitled pair'
+  const type = document.getElementById('pair-type').value
+  const ratio = parseFloat(document.getElementById('pair-ratio').value)
+  const pairing = createPairing({
+    label,
+    type,
+    colors: selectedPairColors.map((hex, i) => ({ role: 'color-' + (i + 1), hex })),
+    targetContrastRatio: ratio,
+  })
+  pairings.push(pairing)
+  savePairingsLocal()
+  document.getElementById('pair-label').value = ''
+  selectedPairColors = []
+  document.querySelectorAll('.pair-color-pick').forEach(d => d.classList.remove('selected'))
+  document.getElementById('btn-add-pair').disabled = true
+  renderPairList()
+  renderColorRows()
+})
+
+document.getElementById('btn-export-pairs').addEventListener('click', () => {
+  if (!pairings.length) return
+  const blob = new Blob([exportPairings(pairings)], { type: 'application/json' })
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'swatchswap-pairings.json'; a.click()
+})
+document.getElementById('btn-import-pairs').addEventListener('click', () => document.getElementById('import-pairs-file').click())
+document.getElementById('import-pairs-file').addEventListener('change', async function(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  try {
+    const imported = importPairings(await file.text())
+    for (const p of imported) {
+      if (!pairings.some(x => x.id === p.id)) pairings.push(p)
+    }
+    savePairingsLocal()
+    renderPairList()
+    renderColorRows()
+  } catch {}
+  this.value = ''
+})
+
+renderPairList()
 </script>
 </body>
 </html>
